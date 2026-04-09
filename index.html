@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>GRIND</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #0A0A0A;
+      --surface: #141414;
+      --surface2: #1E1E1E;
+      --border: #252525;
+      --accent: #FF5A1F;
+      --accent2: #FF8C42;
+      --text: #F0F0F0;
+      --muted: #4A4A4A;
+      --muted2: #666;
+      --green: #3DCC82;
+      --blue: #4FC3F7;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ── SCROLL CONTAINER ─────────────────────────── */
+    .view {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      bottom: 68px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .view.active { display: block; }
+
+    /* ── BOTTOM NAV ───────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      background: #0E0E0E;
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 12px 0 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--muted2);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    /* ── HEADER ───────────────────────────────────── */
+    .page-header {
+      padding: 52px 20px 16px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .app-logo {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .app-logo span { color: var(--accent); }
+
+    .header-date {
+      font-size: 11px;
+      color: var(--muted2);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding-bottom: 4px;
+    }
+
+    /* ── STREAK CARD ──────────────────────────────── */
+    .streak-card {
+      margin: 4px 16px 16px;
+      background: #110800;
+      border: 1px solid #2A1200;
+      border-radius: 22px;
+      padding: 28px 24px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .streak-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(255,90,31,0.12) 0%, transparent 70%);
+    }
+
+    .streak-card::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; left: -40px;
+      width: 130px; height: 130px;
+      background: radial-gradient(circle, rgba(255,140,66,0.07) 0%, transparent 70%);
+    }
+
+    .streak-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .streak-number {
+      font-size: 88px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: -4px;
+      position: relative;
+    }
+
+    .streak-unit {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted2);
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .streak-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+      margin: 16px auto;
+    }
+
+    .streak-msg {
+      font-size: 13px;
+      color: var(--accent2);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    /* ── SECTION LABEL ────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      padding: 0 20px;
+      margin-bottom: 10px;
+    }
+
+    /* ── WEEK GRID ────────────────────────────────── */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 0 16px 16px;
+    }
+
+    .day-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 6px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .day-pill.done {
+      background: rgba(255,90,31,0.08);
+      border-color: rgba(255,90,31,0.35);
+    }
+
+    .day-pill.today { border-color: var(--accent); }
+
+    .day-pill-name {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--muted2);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .day-pill.done .day-pill-name { color: var(--accent); }
+
+    .day-pill-icon { font-size: 20px; margin-bottom: 5px; }
+
+    .day-pill-type {
+      font-size: 8px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .day-pill.done .day-pill-type { color: var(--muted2); }
+
+    /* ── PROGRESS CARD ────────────────────────────── */
+    .progress-card {
+      margin: 0 16px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+    }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .progress-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .progress-pct {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--accent);
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(.22,1,.36,1);
+    }
+
+    /* ── TODAY CARD ───────────────────────────────── */
+    .today-card {
+      margin: 0 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px 18px 18px;
+    }
+
+    .today-eyebrow {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 8px;
+    }
+
+    .today-name {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .today-detail {
+      font-size: 12px;
+      color: var(--muted2);
+      margin-bottom: 16px;
+    }
+
+    /* ── BUTTONS ──────────────────────────────────── */
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.12s, opacity 0.12s;
+    }
+    .btn-primary:active { transform: scale(0.97); opacity: 0.85; }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      color: var(--muted2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.15s;
+    }
+    .btn-ghost:active { border-color: var(--muted2); color: var(--text); }
+
+    /* ── LOG VIEW ─────────────────────────────────── */
+    .log-page-header {
+      padding: 52px 20px 20px;
+    }
+
+    .page-title {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .page-sub {
+      font-size: 12px;
+      color: var(--muted2);
+    }
+
+    /* Type picker */
+    .type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 0 16px 20px;
+    }
+
+    .type-tile {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .type-tile.sel {
+      background: rgba(255,90,31,0.1);
+      border-color: var(--accent);
+    }
+
+    .type-tile-icon { font-size: 26px; margin-bottom: 6px; }
+
+    .type-tile-name {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text);
+    }
+
+    .type-tile.sel .type-tile-name { color: var(--accent); }
+
+    .type-tile-sub {
+      font-size: 9px;
+      color: var(--muted2);
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* Field */
+    .field-wrap {
+      margin: 0 16px 16px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 7px;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 13px 15px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 600;
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s;
+    }
+
+    .field-input:focus { border-color: var(--accent); }
+
+    .field-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 0 16px 10px;
+    }
+
+    .field-row-2 .field-wrap { margin: 0; }
+
+    .pace-banner {
+      margin: 0 16px 16px;
+      padding: 13px 16px;
+      background: rgba(255,90,31,0.07);
+      border: 1px solid rgba(255,90,31,0.18);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pace-banner-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .pace-banner-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    /* Exercise checklist */
+    .ex-check-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ex-check-item.checked {
+      background: rgba(255,90,31,0.07);
+      border-color: rgba(255,90,31,0.3);
+    }
+
+    .ex-checkbox {
+      width: 20px; height: 20px;
+      border: 2px solid var(--muted);
+      border-radius: 6px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .ex-check-item.checked .ex-checkbox {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .ex-check-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Effort */
+    .effort-row {
+      display: flex;
+      gap: 7px;
+    }
+
+    .effort-btn {
+      flex: 1;
+      padding: 12px 0;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      color: var(--muted2);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .effort-btn.sel {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .effort-hints {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+    }
+
+    .effort-hint {
+      font-size: 9px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── HISTORY VIEW ─────────────────────────────── */
+    .chart-card {
+      margin: 0 16px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 16px 14px;
+      overflow: hidden;
+    }
+
+    .chart-card-title {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      margin-bottom: 14px;
+    }
+
+    .chart-svg { width: 100%; display: block; overflow: visible; }
+
+    .week-log-card {
+      margin: 0 16px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 15px 16px;
+    }
+
+    .wlc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .wlc-week {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .wlc-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(255,90,31,0.12);
+      color: var(--accent);
+    }
+
+    .wlc-badge.full {
+      background: rgba(61,204,130,0.12);
+      color: var(--green);
+    }
+
+    .session-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .session-row:first-of-type { border-top: none; }
+
+    .sdot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .sdot.run { background: var(--blue); }
+
+    .sname { font-weight: 700; flex: 1; }
+
+    .sstat { font-size: 11px; color: var(--muted2); }
+
+    /* ── EMPTY STATE ──────────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted2);
+    }
+
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-text { font-size: 13px; font-weight: 500; }
+
+    /* ── ACTION SHEET ─────────────────────────────── */
+    .sheet-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.22s;
+      pointer-events: none;
+    }
+    .sheet-backdrop.open { opacity: 1; pointer-events: all; }
+
+    .action-sheet {
+      position: fixed;
+      bottom: 0; left: 50%; 
+      transform: translateX(-50%) translateY(100%);
+      width: 100%; max-width: 430px;
+      background: #1A1A1A;
+      border-radius: 22px 22px 0 0;
+      border-top: 1px solid var(--border);
+      padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
+      z-index: 201;
+      transition: transform 0.28s cubic-bezier(.32,1.2,.5,1);
+    }
+    .action-sheet.open { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: #333;
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    .sheet-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .sheet-btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: opacity 0.15s;
+      letter-spacing: 0.04em;
+    }
+    .sheet-btn:active { opacity: 0.75; }
+    .sheet-btn.edit   { background: var(--surface2); color: var(--text); }
+    .sheet-btn.delete { background: rgba(255,60,60,0.12); color: #FF4444; }
+    .sheet-btn.cancel { background: transparent; color: var(--muted2); margin-bottom: 0; }
+
+    /* ── PLANS VIEW ───────────────────────────────── */
+    .plan-tab-row {
+      display: flex;
+      gap: 8px;
+      margin: 0 16px 20px;
+    }
+
+    .plan-tab {
+      flex: 1;
+      padding: 10px 6px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .plan-tab.active {
+      background: rgba(255,90,31,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .plan-card {
+      margin: 0 16px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .plan-card-header {
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .plan-card-icon { font-size: 24px; }
+
+    .plan-card-title {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+      text-transform: uppercase;
+    }
+
+    .plan-card-sub {
+      font-size: 11px;
+      color: var(--muted2);
+      margin-top: 1px;
+    }
+
+    .plan-card-badge {
+      margin-left: auto;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 20px;
+      background: rgba(255,90,31,0.12);
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .plan-exercise-row {
+      display: flex;
+      align-items: center;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .plan-exercise-row:last-child { border-bottom: none; }
+
+    .plan-ex-num {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--accent);
+      width: 18px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .plan-ex-info { flex: 1; }
+
+    .plan-ex-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .plan-ex-detail {
+      font-size: 11px;
+      color: var(--muted2);
+      margin-top: 2px;
+    }
+
+    .plan-run-block {
+      margin: 0 16px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .plan-run-phase {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .plan-run-phase:last-child { border-bottom: none; }
+
+    .plan-run-icon {
+      font-size: 20px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .plan-run-phase-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 3px;
+    }
+
+    .plan-run-phase-detail {
+      font-size: 12px;
+      color: var(--muted2);
+      line-height: 1.4;
+    }
+
+    .plan-note {
+      margin: 0 16px 20px;
+      padding: 14px 16px;
+      background: rgba(255,90,31,0.06);
+      border: 1px solid rgba(255,90,31,0.15);
+      border-radius: 12px;
+      font-size: 12px;
+      color: var(--muted2);
+      line-height: 1.5;
+    }
+
+    .plan-note strong { color: var(--accent2); }
+
+    /* ── TOAST ────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--green);
+      color: #000;
+      padding: 11px 22px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 300;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HOME ═══════════════════════════════════════════════ -->
+<div id="view-home" class="view active">
+  <div class="page-header">
+    <div class="app-logo">GRIND<span>.</span></div>
+    <div class="header-date" id="home-date"></div>
+  </div>
+
+  <div class="streak-card">
+    <div class="streak-eyebrow">🔥 Current Streak</div>
+    <div class="streak-number" id="streak-num">0</div>
+    <div class="streak-unit">Sessions</div>
+    <div class="streak-divider"></div>
+    <div class="streak-msg" id="streak-msg">Log your first session to start.</div>
+  </div>
+
+  <div class="section-label">This Week</div>
+  <div class="week-grid" id="week-grid"></div>
+
+  <div class="progress-card">
+    <div class="progress-row">
+      <span class="progress-label">Week Completion</span>
+      <span class="progress-pct" id="week-pct">0%</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" id="week-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="section-label">Today</div>
+  <div class="today-card">
+    <div class="today-eyebrow" id="today-eyebrow">Scheduled</div>
+    <div class="today-name" id="today-name">—</div>
+    <div class="today-detail" id="today-detail"></div>
+    <button class="btn-primary" onclick="goLog()">Log Today's Session →</button>
+  </div>
+</div>
+
+<!-- ═══ LOG ════════════════════════════════════════════════ -->
+<div id="view-log" class="view">
+  <div class="log-page-header">
+    <div class="page-title">Log Session</div>
+    <div class="page-sub" id="log-date-sub"></div>
+  </div>
+
+  <div class="section-label">Session Type</div>
+  <div class="type-grid">
+    <div class="type-tile sel" id="tile-strength_a" onclick="selectType('strength_a')">
+      <div class="type-tile-icon">💪</div>
+      <div class="type-tile-name">Strength A</div>
+      <div class="type-tile-sub">Lower Body · Mon</div>
+    </div>
+    <div class="type-tile" id="tile-strength_b" onclick="selectType('strength_b')">
+      <div class="type-tile-icon">🏋️</div>
+      <div class="type-tile-name">Strength B</div>
+      <div class="type-tile-sub">Upper Body · Thu</div>
+    </div>
+    <div class="type-tile" id="tile-run" onclick="selectType('run')">
+      <div class="type-tile-icon">🏃</div>
+      <div class="type-tile-name">Run</div>
+      <div class="type-tile-sub">Cardio · Tue</div>
+    </div>
+    <div class="type-tile" id="tile-run_core" onclick="selectType('run_core')">
+      <div class="type-tile-icon">⚡</div>
+      <div class="type-tile-name">Run + Core</div>
+      <div class="type-tile-sub">Cardio + Core · Sat</div>
+    </div>
+  </div>
+
+  <!-- Run fields -->
+  <div id="run-fields">
+    <div class="field-row-2">
+      <div class="field-wrap">
+        <label class="field-label">Duration (min)</label>
+        <input class="field-input" type="number" inputmode="decimal" id="run-duration" placeholder="45" oninput="calcPace()">
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">Distance (km)</label>
+        <input class="field-input" type="number" inputmode="decimal" id="run-distance" step="0.1" placeholder="5.0" oninput="calcPace()">
+      </div>
+    </div>
+    <div class="pace-banner">
+      <span class="pace-banner-label">⚡ Pace</span>
+      <span class="pace-banner-val" id="pace-display">— /km</span>
+    </div>
+  </div>
+
+  <!-- Strength fields -->
+  <div id="strength-fields" style="display:none">
+    <div class="field-wrap">
+      <label class="field-label">Exercises Completed</label>
+      <div id="exercise-list"></div>
+    </div>
+  </div>
+
+  <!-- Effort -->
+  <div class="field-wrap">
+    <label class="field-label">Effort Level</label>
+    <div class="effort-row" id="effort-row">
+      <div class="effort-btn sel" onclick="selectEffort(1,this)">1</div>
+      <div class="effort-btn" onclick="selectEffort(2,this)">2</div>
+      <div class="effort-btn" onclick="selectEffort(3,this)">3</div>
+      <div class="effort-btn" onclick="selectEffort(4,this)">4</div>
+      <div class="effort-btn" onclick="selectEffort(5,this)">5</div>
+    </div>
+    <div class="effort-hints">
+      <span class="effort-hint">Easy</span>
+      <span class="effort-hint">Max</span>
+    </div>
+  </div>
+
+  <div class="field-wrap">
+    <label class="field-label">Notes (optional)</label>
+    <input class="field-input" type="text" id="session-notes" placeholder="How'd it feel?">
+  </div>
+
+  <div style="padding: 4px 16px 28px">
+    <button class="btn-primary" onclick="saveSession()">Save Session ✓</button>
+    <button class="btn-ghost" onclick="showView('home')">Cancel</button>
+  </div>
+</div>
+
+<!-- ═══ HISTORY ════════════════════════════════════════════ -->
+<div id="view-history" class="view">
+  <div class="log-page-header">
+    <div class="page-title">History</div>
+    <div class="page-sub" id="history-sub"></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-title">📏 Run Distance (km)</div>
+    <svg class="chart-svg" id="chart-distance" height="110"></svg>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-title">⚡ Run Pace (min/km · lower = faster)</div>
+    <svg class="chart-svg" id="chart-pace" height="110"></svg>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-title">📅 Weekly Sessions Completed</div>
+    <svg class="chart-svg" id="chart-completion" height="110"></svg>
+  </div>
+
+  <div class="section-label" style="margin-top:6px">Session Log</div>
+  <div id="session-log"></div>
+  <div style="height:24px"></div>
+</div>
+
+<!-- ═══ PLANS ═══════════════════════════════════════════════ -->
+<div id="view-plans" class="view">
+  <div class="log-page-header">
+    <div class="page-title">Plans</div>
+    <div class="page-sub">Your 4-day weekly program</div>
+  </div>
+
+  <div class="plan-tab-row">
+    <div class="plan-tab active" id="ptab-strength_a" onclick="switchPlanTab('strength_a')">Str A</div>
+    <div class="plan-tab" id="ptab-strength_b" onclick="switchPlanTab('strength_b')">Str B</div>
+    <div class="plan-tab" id="ptab-run" onclick="switchPlanTab('run')">Run</div>
+    <div class="plan-tab" id="ptab-run_core" onclick="switchPlanTab('run_core')">Run+Core</div>
+  </div>
+
+  <div id="plan-content"></div>
+</div>
+
+<!-- ═══ ACTION SHEET ════════════════════════════════════════ -->
+<div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
+<div class="action-sheet" id="action-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheet-title">Session</div>
+  <button class="sheet-btn edit"   onclick="editFromSheet()">✏️ &nbsp;Edit Session</button>
+  <button class="sheet-btn delete" onclick="deleteFromSheet()">🗑️ &nbsp;Delete Session</button>
+  <button class="sheet-btn cancel" onclick="closeSheet()">Cancel</button>
+</div>
+
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-home" onclick="showView('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    Home
+  </button>
+  <button class="nav-btn" id="nav-log" onclick="showView('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="16"/>
+      <line x1="8" y1="12" x2="16" y2="12"/>
+    </svg>
+    Log
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="showView('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+    History
+  </button>
+  <button class="nav-btn" id="nav-plans" onclick="showView('plans')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    Plans
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ CONSTANTS ════════════════════════════════════════════════
+const SCHEDULE_DOW  = { 1:'Strength A', 2:'Run', 4:'Strength B', 6:'Run + Core' };
+const SCHEDULE_TYPE = { 1:'strength_a', 2:'run', 4:'strength_b', 6:'run_core' };
+const TYPE_LABEL    = { strength_a:'Strength A', strength_b:'Strength B', run:'Run', run_core:'Run + Core' };
+
+const EXERCISES = {
+  strength_a: ['Goblet Squat','Romanian Deadlift','Reverse Lunge','Single-Leg Deadlift','DB Swing','Plank'],
+  strength_b: ['Floor Press','Bent-Over Row','Shoulder Press','Curl → Press Combo','Tricep Extension','Dead Bug'],
+};
+
+// ═══ SUPABASE CONFIG ══════════════════════════════════════════
+const SB_URL = 'https://fylnfkyobegdxuxujssr.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bG5ma3lvYmVnZHh1eHVqc3NyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NDU1MDIsImV4cCI6MjA5MTMyMTUwMn0.1yCUxrIj3AcM12VWU7rErz9UNcbNCXcMlr1Jybx4Wbk';
+const SB_HEADERS = {
+  'apikey': SB_KEY,
+  'Authorization': `Bearer ${SB_KEY}`,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=representation'
+};
+
+// ═══ STATE ════════════════════════════════════════════════════
+let selType        = 'strength_a';
+let selEffort      = 1;
+let editingId      = null;
+let sheetId        = null;
+let cachedSessions = null; // in-memory cache to avoid re-fetching
+
+// ═══ SUPABASE API ═════════════════════════════════════════════
+// Convert DB row → app session object
+function dbToSession(row) {
+  return {
+    id:                 row.id,
+    date:               row.date,
+    type:               row.type,
+    effort:             row.effort,
+    notes:              row.notes || '',
+    duration:           row.duration || 0,
+    distance:           row.distance || 0,
+    pace:               row.pace || '',
+    paceVal:            row.pace_val || 0,
+    completedExercises: row.completed_exercises ? JSON.parse(row.completed_exercises) : [],
+  };
+}
+
+// Convert app session → DB row
+function sessionToDb(s) {
+  return {
+    id:                   s.id,
+    date:                 s.date,
+    type:                 s.type,
+    effort:               s.effort || null,
+    notes:                s.notes || null,
+    duration:             s.duration || null,
+    distance:             s.distance || null,
+    pace:                 s.pace || null,
+    pace_val:             s.paceVal || null,
+    completed_exercises:  s.completedExercises ? JSON.stringify(s.completedExercises) : null,
+  };
+}
+
+async function fetchSessions() {
+  if (cachedSessions) return cachedSessions;
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/sessions?select=*&order=date.asc`, { headers: SB_HEADERS });
+    if (!res.ok) throw new Error(await res.text());
+    const rows = await res.json();
+    cachedSessions = rows.map(dbToSession);
+    return cachedSessions;
+  } catch (e) {
+    console.error('fetchSessions error:', e);
+    return [];
+  }
+}
+
+async function insertSession(session) {
+  const res = await fetch(`${SB_URL}/rest/v1/sessions`, {
+    method: 'POST',
+    headers: SB_HEADERS,
+    body: JSON.stringify(sessionToDb(session))
+  });
+  if (!res.ok) throw new Error(await res.text());
+  cachedSessions = null; // invalidate cache
+}
+
+async function updateSession(session) {
+  const res = await fetch(`${SB_URL}/rest/v1/sessions?id=eq.${session.id}`, {
+    method: 'PATCH',
+    headers: SB_HEADERS,
+    body: JSON.stringify(sessionToDb(session))
+  });
+  if (!res.ok) throw new Error(await res.text());
+  cachedSessions = null;
+}
+
+async function deleteSession(id) {
+  const res = await fetch(`${SB_URL}/rest/v1/sessions?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: SB_HEADERS
+  });
+  if (!res.ok) throw new Error(await res.text());
+  cachedSessions = null;
+}
+
+// ═══ HELPERS ══════════════════════════════════════════════════
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function getWeekStart(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  const mon = new Date(d); mon.setDate(d.getDate() + diff);
+  return mon.toISOString().split('T')[0];
+}
+
+function formatDate(str) {
+  return new Date(str + 'T00:00:00').toLocaleDateString('en-CA',{month:'short',day:'numeric'});
+}
+
+// ═══ VIEW ROUTER ══════════════════════════════════════════════
+async function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+
+  if (name === 'home')    await renderHome();
+  if (name === 'log')     renderLog();
+  if (name === 'history') await renderHistory();
+  if (name === 'plans')   renderPlanContent(activePlanTab);
+}
+
+async function goLog() {
+  await showView('log');
+  const dow = new Date().getDay();
+  const t = SCHEDULE_TYPE[dow];
+  if (t) selectType(t);
+}
+
+// ═══ HOME ═════════════════════════════════════════════════════
+async function renderHome() {
+  const sessions = await fetchSessions();
+  const now  = new Date();
+  const dow  = now.getDay();
+  const wk   = getWeekStart(todayStr());
+
+  document.getElementById('home-date').textContent =
+    now.toLocaleDateString('en-CA', {weekday:'short', month:'short', day:'numeric'});
+
+  // Streak
+  const streak = calcStreak(sessions);
+  document.getElementById('streak-num').textContent = streak;
+  document.getElementById('streak-msg').textContent  = streakMsg(streak);
+
+  // Week grid
+  const DAYS = [
+    {dow:1, label:'Mon', icon:'💪', short:'Str A', type:'strength_a'},
+    {dow:2, label:'Tue', icon:'🏃', short:'Run',   type:'run'},
+    {dow:4, label:'Thu', icon:'🏋️', short:'Str B', type:'strength_b'},
+    {dow:6, label:'Sat', icon:'⚡', short:'Run+C', type:'run_core'},
+  ];
+
+  const thisWeek = sessions.filter(s => getWeekStart(s.date) === wk);
+  const doneTypes = thisWeek.map(s => s.type);
+
+  document.getElementById('week-grid').innerHTML = DAYS.map(d => {
+    const done    = doneTypes.includes(d.type);
+    const isToday = d.dow === dow;
+    return `<div class="day-pill ${done?'done':''} ${isToday?'today':''}">
+      <div class="day-pill-name">${d.label}</div>
+      <div class="day-pill-icon">${done ? '✅' : d.icon}</div>
+      <div class="day-pill-type">${d.short}</div>
+    </div>`;
+  }).join('');
+
+  // Progress
+  const pct = Math.round((thisWeek.length / 4) * 100);
+  document.getElementById('week-pct').textContent   = pct + '%';
+  document.getElementById('week-bar').style.width   = pct + '%';
+
+  // Today
+  const sched = SCHEDULE_DOW[dow];
+  if (sched) {
+    const done = doneTypes.includes(SCHEDULE_TYPE[dow]);
+    document.getElementById('today-eyebrow').textContent = done ? '✅ Done Today' : 'Scheduled Today';
+    document.getElementById('today-name').textContent    = sched;
+    document.getElementById('today-detail').textContent  = done
+      ? 'You got it done. Rest up.'
+      : '~55 min · Put on your shoes and go.';
+  } else {
+    document.getElementById('today-eyebrow').textContent = 'Rest Day';
+    document.getElementById('today-name').textContent    = 'Rest & Recover';
+    document.getElementById('today-detail').textContent  = 'Nothing scheduled. Recharge.';
+  }
+}
+
+function calcStreak(sessions) {
+  if (!sessions.length) return 0;
+  const sorted = [...sessions].sort((a,b) => b.date.localeCompare(a.date));
+  let streak = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i-1].date + 'T00:00:00');
+    const curr = new Date(sorted[i].date   + 'T00:00:00');
+    const diff = Math.round((prev - curr) / 86400000);
+    // Allow up to 3 days gap (covers rest days between sessions)
+    if (diff <= 3) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function streakMsg(n) {
+  if (n === 0)  return 'Log your first session to start.';
+  if (n < 3)    return 'Getting started. Keep it moving.';
+  if (n < 6)    return 'Building momentum. Don\'t stop now.';
+  if (n < 10)   return 'Two weeks strong. You\'re locked in.';
+  if (n < 16)   return 'Real consistency. This is becoming you.';
+  return 'Unstoppable. This is who you are now.';
+}
+
+// ═══ LOG ══════════════════════════════════════════════════════
+function renderLog() {
+  const editing = editingId !== null;
+  document.querySelector('#view-log .page-title').textContent = editing ? 'Edit Session' : 'Log Session';
+  document.getElementById('log-date-sub').textContent =
+    new Date().toLocaleDateString('en-CA', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  if (!editing) resetLogForm();
+}
+
+function resetLogForm() {
+  document.getElementById('run-duration').value = '';
+  document.getElementById('run-distance').value = '';
+  document.getElementById('pace-display').textContent = '— /km';
+  document.getElementById('session-notes').value = '';
+  selEffort = 1;
+  document.querySelectorAll('.effort-btn').forEach((b,i) => {
+    b.classList.toggle('sel', i === 0);
+  });
+}
+
+function selectType(type) {
+  selType = type;
+  document.querySelectorAll('.type-tile').forEach(t => t.classList.remove('sel'));
+  document.getElementById('tile-' + type)?.classList.add('sel');
+
+  const isRun = type === 'run' || type === 'run_core';
+  document.getElementById('run-fields').style.display      = isRun ? 'block' : 'none';
+  document.getElementById('strength-fields').style.display = isRun ? 'none'  : 'block';
+
+  if (!isRun) buildExChecklist(type);
+}
+
+function buildExChecklist(type) {
+  const exs = EXERCISES[type] || [];
+  document.getElementById('exercise-list').innerHTML = exs.map((ex, i) => `
+    <div class="ex-check-item" id="ex-wrap-${i}" onclick="toggleEx(${i})">
+      <div class="ex-checkbox" id="ex-box-${i}">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none" id="ex-chk-${i}">
+          <path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="ex-check-label">${ex}</span>
+    </div>
+  `).join('');
+}
+
+function toggleEx(i) {
+  const wrap = document.getElementById('ex-wrap-' + i);
+  const chk  = document.getElementById('ex-chk-'  + i);
+  const done = wrap.classList.toggle('checked');
+  chk.style.display = done ? 'block' : 'none';
+}
+
+function selectEffort(val, el) {
+  selEffort = val;
+  document.querySelectorAll('.effort-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function calcPace() {
+  const dur  = parseFloat(document.getElementById('run-duration').value);
+  const dist = parseFloat(document.getElementById('run-distance').value);
+  if (dur > 0 && dist > 0) {
+    const pm  = dur / dist;
+    const min = Math.floor(pm);
+    const sec = Math.round((pm - min) * 60);
+    document.getElementById('pace-display').textContent = `${min}:${String(sec).padStart(2,'0')} /km`;
+  } else {
+    document.getElementById('pace-display').textContent = '— /km';
+  }
+}
+
+async function saveSession() {
+  const isRun = selType === 'run' || selType === 'run_core';
+  const btn = document.querySelector('#view-log .btn-primary');
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+
+  const session = {
+    id:     editingId !== null ? editingId : Date.now(),
+    date:   todayStr(),
+    type:   selType,
+    effort: selEffort,
+    notes:  document.getElementById('session-notes').value.trim(),
+  };
+
+  if (isRun) {
+    session.duration = parseFloat(document.getElementById('run-duration').value) || 0;
+    session.distance = parseFloat(document.getElementById('run-distance').value) || 0;
+    if (session.duration > 0 && session.distance > 0) {
+      const pm = session.duration / session.distance;
+      const min = Math.floor(pm); const sec = Math.round((pm - min) * 60);
+      session.pace    = `${min}:${String(sec).padStart(2,'0')}`;
+      session.paceVal = pm;
+    }
+  } else {
+    const exs = EXERCISES[selType] || [];
+    session.completedExercises = exs.filter((_, i) => document.getElementById('ex-wrap-'+i)?.classList.contains('checked'));
+  }
+
+  try {
+    if (editingId !== null) {
+      await updateSession(session);
+      showToast('Session updated ✓');
+    } else {
+      await insertSession(session);
+      showToast('Session saved 🔥');
+    }
+    editingId = null;
+    setTimeout(() => showView('home'), 700);
+  } catch(e) {
+    showToast('Error saving — try again');
+    console.error(e);
+    if (btn) { btn.textContent = 'Save Session ✓'; btn.disabled = false; }
+  }
+}
+
+// ═══ ACTION SHEET ═════════════════════════════════════════════
+async function openSheet(id) {
+  const sessions = await fetchSessions();
+  const s = sessions.find(s => s.id === id);
+  if (!s) return;
+  sheetId = id;
+  document.getElementById('sheet-title').textContent =
+    `${TYPE_LABEL[s.type]||s.type} · ${formatDate(s.date)}`;
+  document.getElementById('sheet-backdrop').classList.add('open');
+  document.getElementById('action-sheet').classList.add('open');
+}
+
+async function editFromSheet() {
+  const sessions = await fetchSessions();
+  const s = sessions.find(s => s.id === sheetId);
+  if (!s) { closeSheet(); return; }
+
+  editingId = s.id;
+  closeSheet();
+  await showView('log');
+  selectType(s.type);
+
+  if (s.duration) document.getElementById('run-duration').value = s.duration;
+  if (s.distance) document.getElementById('run-distance').value = s.distance;
+  if (s.duration && s.distance) calcPace();
+
+  if (s.completedExercises && s.completedExercises.length) {
+    const exs = EXERCISES[s.type] || [];
+    exs.forEach((ex, i) => {
+      if (s.completedExercises.includes(ex)) {
+        const wrap = document.getElementById('ex-wrap-' + i);
+        const chk  = document.getElementById('ex-chk-' + i);
+        if (wrap) wrap.classList.add('checked');
+        if (chk)  chk.style.display = 'block';
+      }
+    });
+  }
+
+  selEffort = s.effort || 1;
+  document.querySelectorAll('.effort-btn').forEach((b, i) => {
+    b.classList.toggle('sel', i + 1 === selEffort);
+  });
+
+  document.getElementById('session-notes').value = s.notes || '';
+}
+
+function deleteFromSheet() {
+  // Show inline confirm inside the sheet instead of native confirm()
+  const sheet = document.getElementById('action-sheet');
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="color:#FF4444">Delete Session?</div>
+    <p style="text-align:center;font-size:13px;color:var(--muted2);margin-bottom:18px;line-height:1.5">This can't be undone.</p>
+    <button class="sheet-btn delete" onclick="confirmDelete()" style="background:rgba(255,60,60,0.18)">🗑️ &nbsp;Yes, Delete It</button>
+    <button class="sheet-btn cancel" onclick="closeSheet()">Cancel</button>
+  `;
+}
+
+async function confirmDelete() {
+  try {
+    await deleteSession(sheetId);
+    closeSheet();
+    showToast('Session deleted');
+    await renderHistory();
+  } catch(e) {
+    showToast('Error deleting — try again');
+    console.error(e);
+  }
+}
+
+function closeSheet() {
+  sheetId = null;
+  document.getElementById('sheet-backdrop').classList.remove('open');
+  const sheet = document.getElementById('action-sheet');
+  sheet.classList.remove('open');
+  // Restore original sheet content after transition
+  setTimeout(() => {
+    sheet.innerHTML = `
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="sheet-title">Session</div>
+      <button class="sheet-btn edit"   onclick="editFromSheet()">✏️ &nbsp;Edit Session</button>
+      <button class="sheet-btn delete" onclick="deleteFromSheet()">🗑️ &nbsp;Delete Session</button>
+      <button class="sheet-btn cancel" onclick="closeSheet()">Cancel</button>
+    `;
+  }, 300);
+}
+
+async function renderHistory() {
+  const sessions = await fetchSessions();
+  const runs  = sessions.filter(s => s.paceVal > 0 || s.distance > 0);
+  const total = sessions.length;
+
+  document.getElementById('history-sub').textContent =
+    `${total} session${total !== 1 ? 's' : ''} logged total`;
+
+  drawDistanceChart(runs);
+  drawPaceChart(runs);
+  drawCompletionChart(sessions);
+  drawSessionLog(sessions);
+}
+
+// ── Line chart ────────────────────────────────────────────────
+function drawLineChart(svgId, points, color, valueFn, labelFn) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const W = svg.parentElement.clientWidth - 32;
+  const H = 110;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+
+  if (!points.length) {
+    svg.innerHTML = noDataText(W, H);
+    return;
+  }
+
+  const vals    = points.map(valueFn);
+  const minV    = Math.min(...vals);
+  const maxV    = Math.max(...vals);
+  const range   = maxV - minV || 1;
+  const pL=8, pR=8, pT=20, pB=22;
+  const cW = W - pL - pR;
+  const cH = H - pT - pB;
+
+  const px = i  => pL + (i / Math.max(points.length - 1, 1)) * cW;
+  const py = v  => pT + cH - ((v - minV) / range) * cH;
+
+  const path  = points.map((p,i) => `${i===0?'M':'L'}${px(i).toFixed(1)},${py(valueFn(p)).toFixed(1)}`).join(' ');
+  const area  = path + ` L${px(points.length-1).toFixed(1)},${(pT+cH).toFixed(1)} L${px(0).toFixed(1)},${(pT+cH).toFixed(1)} Z`;
+  const gid   = svgId + 'g';
+
+  let html = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+    <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+  </linearGradient></defs>
+  <path d="${area}" fill="url(#${gid})"/>
+  <path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  points.forEach((p, i) => {
+    const cx = px(i).toFixed(1), cy = py(valueFn(p)).toFixed(1);
+    html += `<circle cx="${cx}" cy="${cy}" r="3.5" fill="${color}"/>`;
+    const showLabel = points.length <= 6 || i === 0 || i === points.length - 1;
+    if (showLabel) {
+      html += `<text x="${cx}" y="${H - 5}" text-anchor="middle" fill="#555" font-size="9" font-family="-apple-system,sans-serif">${labelFn(p)}</text>`;
+      html += `<text x="${cx}" y="${parseFloat(cy) - 7}" text-anchor="middle" fill="${color}" font-size="9" font-weight="700" font-family="-apple-system,sans-serif">${valueFn(p).toFixed(1)}</text>`;
+    }
+  });
+
+  svg.innerHTML = html;
+}
+
+function drawDistanceChart(runs) {
+  drawLineChart('chart-distance', runs.slice(-10),
+    '#4FC3F7',
+    s => s.distance || 0,
+    s => s.date.slice(5)
+  );
+}
+
+function drawPaceChart(runs) {
+  const withPace = runs.filter(s => s.paceVal > 0);
+  drawLineChart('chart-pace', withPace.slice(-10),
+    '#FF5A1F',
+    s => s.paceVal,
+    s => s.date.slice(5)
+  );
+}
+
+// ── Bar chart ─────────────────────────────────────────────────
+function drawCompletionChart(sessions) {
+  const svg = document.getElementById('chart-completion');
+  if (!svg) return;
+  const W = svg.parentElement.clientWidth - 32;
+  const H = 110;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+
+  const weeks = {};
+  sessions.forEach(s => {
+    const wk = getWeekStart(s.date);
+    weeks[wk] = (weeks[wk] || 0) + 1;
+  });
+
+  const keys = Object.keys(weeks).sort().slice(-8);
+  if (!keys.length) { svg.innerHTML = noDataText(W, H); return; }
+
+  const pL=8, pR=8, pT=20, pB=22;
+  const cW = W - pL - pR;
+  const cH = H - pT - pB;
+  const slotW = cW / keys.length;
+  const barW  = Math.min(slotW * 0.55, 30);
+
+  let html = '';
+  keys.forEach((wk, i) => {
+    const count  = Math.min(weeks[wk], 4);
+    const barH   = (count / 4) * cH;
+    const x      = pL + i * slotW + (slotW - barW) / 2;
+    const y      = pT + cH - barH;
+    const full   = count >= 4;
+    const c      = full ? '#3DCC82' : '#FF5A1F';
+    const label  = formatDate(wk).replace(' ','·');
+
+    html += `<rect x="${x.toFixed(1)}" y="${(pT+cH).toFixed(1)}" width="${barW.toFixed(1)}" height="0" fill="${c}" rx="4" opacity="0.85">
+      <animate attributeName="height" from="0" to="${barH.toFixed(1)}" dur="0.45s" fill="freeze" begin="${i*0.07}s"/>
+      <animate attributeName="y" from="${(pT+cH).toFixed(1)}" to="${y.toFixed(1)}" dur="0.45s" fill="freeze" begin="${i*0.07}s"/>
+    </rect>`;
+    html += `<text x="${(x+barW/2).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#555" font-size="8" font-family="-apple-system,sans-serif">${label}</text>`;
+    html += `<text x="${(x+barW/2).toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" fill="${c}" font-size="9" font-weight="700" font-family="-apple-system,sans-serif">${count}/4</text>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+function noDataText(W, H) {
+  return `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#333" font-size="12" font-family="-apple-system,sans-serif">No data yet</text>`;
+}
+
+// ── Session Log ───────────────────────────────────────────────
+function drawSessionLog(sessions) {
+  const el = document.getElementById('session-log');
+  if (!sessions.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No sessions yet.<br>Tap Log to get started.</div></div>`;
+    return;
+  }
+
+  const weeks = {};
+  sessions.forEach(s => {
+    const wk = getWeekStart(s.date);
+    if (!weeks[wk]) weeks[wk] = [];
+    weeks[wk].push(s);
+  });
+
+  el.innerHTML = Object.keys(weeks).sort().reverse().map(wk => {
+    const ws = weeks[wk];
+    const full = ws.length >= 4;
+    return `<div class="week-log-card">
+      <div class="wlc-header">
+        <span class="wlc-week">Week of ${formatDate(wk)}</span>
+        <span class="wlc-badge ${full?'full':''}">${ws.length}/4 sessions</span>
+      </div>
+      ${ws.sort((a,b)=>a.date.localeCompare(b.date)).map(s => {
+        const isRun = s.type === 'run' || s.type === 'run_core';
+        const stat  = isRun && s.distance
+          ? `${s.distance}km · ${s.pace||'—'}/km`
+          : (s.completedExercises ? `${s.completedExercises.length} exercises` : '');
+        return `<div class="session-row" onclick="openSheet(${s.id})" style="cursor:pointer">
+          <div class="sdot ${isRun?'run':''}"></div>
+          <span class="sname">${TYPE_LABEL[s.type]||s.type}</span>
+          <span class="sstat">${[stat, s.effort ? 'E'+s.effort : ''].filter(Boolean).join(' · ')}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-left:4px"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ═══ PLANS ════════════════════════════════════════════════════
+const PLAN_DATA = {
+  strength_a: {
+    icon: '💪', title: 'Strength A', sub: 'Lower Body Focus · Monday', badge: '~55 min',
+    exercises: [
+      { name: 'Goblet Squat',         detail: '4 sets × 12 reps' },
+      { name: 'Romanian Deadlift',     detail: '4 sets × 10 reps' },
+      { name: 'Reverse Lunge',         detail: '3 sets × 10 reps each leg' },
+      { name: 'Single-Leg Deadlift',   detail: '3 sets × 8 reps each leg' },
+      { name: 'DB Swing',              detail: '3 sets × 15 reps' },
+      { name: 'Plank',                 detail: '3 sets × 45 seconds' },
+    ],
+    note: '<strong>Equipment:</strong> Single 35 lb dumbbell. Rest 60–90 sec between sets. Focus on controlled movement over speed.'
+  },
+  strength_b: {
+    icon: '🏋️', title: 'Strength B', sub: 'Upper Body + Core Focus · Thursday', badge: '~55 min',
+    exercises: [
+      { name: 'Floor Press',           detail: '4 sets × 12 reps' },
+      { name: 'Bent-Over Row',         detail: '4 sets × 12 reps' },
+      { name: 'Shoulder Press',        detail: '3 sets × 10 reps' },
+      { name: 'Curl → Press Combo',    detail: '3 sets × 10 reps' },
+      { name: 'Tricep Overhead Ext.',  detail: '3 sets × 12 reps' },
+      { name: 'Dead Bug',              detail: '3 sets × 10 reps each side' },
+    ],
+    note: '<strong>Equipment:</strong> Single 35 lb dumbbell. Keep core braced throughout all upper body movements.'
+  },
+  run: {
+    icon: '🏃', title: 'Run', sub: 'Cardio · Tuesday', badge: '~55 min',
+    phases: [
+      { icon: '🚶', title: 'Warm-Up', detail: '5 min easy walk to get the legs moving.' },
+      { icon: '🏃', title: 'Weeks 1–4 · Run/Walk Intervals', detail: '2 min run / 1 min walk. Repeat for 40 min. Don\'t push pace — just keep moving.' },
+      { icon: '💨', title: 'Weeks 5+ · Steady Run', detail: 'Aim for a continuous 35–40 min run. Build pace gradually week by week.' },
+      { icon: '🚶', title: 'Cool-Down', detail: '5–10 min walk. Let your heart rate come down naturally.' },
+    ],
+    note: '<strong>Goal:</strong> Build aerobic base first. Pace doesn\'t matter — consistency does. Track your distance and watch it grow.'
+  },
+  run_core: {
+    icon: '⚡', title: 'Run + Core', sub: 'Cardio + Core · Saturday', badge: '~55 min',
+    phases: [
+      { icon: '🚶', title: 'Warm-Up', detail: '5 min easy walk.' },
+      { icon: '🏃', title: 'Run', detail: 'Same run protocol as Tuesday — intervals weeks 1–4, steady run from week 5+. Aim for 35–40 min.' },
+      { icon: '🔥', title: 'Core Finisher (10 min)', detail: 'Crunches × 20 · Leg Raises × 15 · Plank 45 sec · Repeat × 2 rounds.' },
+    ],
+    note: '<strong>Tip:</strong> The core work at the end is short but effective. Don\'t skip it — it\'s only 10 minutes.'
+  }
+};
+
+let activePlanTab = 'strength_a';
+
+function switchPlanTab(type) {
+  activePlanTab = type;
+  document.querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('ptab-' + type).classList.add('active');
+  renderPlanContent(type);
+}
+
+function renderPlanContent(type) {
+  const p = PLAN_DATA[type];
+  if (!p) return;
+  const el = document.getElementById('plan-content');
+
+  let html = `
+    <div class="plan-card">
+      <div class="plan-card-header">
+        <span class="plan-card-icon">${p.icon}</span>
+        <div>
+          <div class="plan-card-title">${p.title}</div>
+          <div class="plan-card-sub">${p.sub}</div>
+        </div>
+        <span class="plan-card-badge">${p.badge}</span>
+      </div>
+  `;
+
+  if (p.exercises) {
+    p.exercises.forEach((ex, i) => {
+      html += `<div class="plan-exercise-row">
+        <span class="plan-ex-num">${i + 1}</span>
+        <div class="plan-ex-info">
+          <div class="plan-ex-name">${ex.name}</div>
+          <div class="plan-ex-detail">${ex.detail}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  html += `</div>`;
+
+  if (p.phases) {
+    html += `<div class="plan-run-block">`;
+    p.phases.forEach(ph => {
+      html += `<div class="plan-run-phase">
+        <span class="plan-run-icon">${ph.icon}</span>
+        <div>
+          <div class="plan-run-phase-title">${ph.title}</div>
+          <div class="plan-run-phase-detail">${ph.detail}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="plan-note">${p.note}</div>`;
+  html += `<div style="height:8px"></div>`;
+
+  el.innerHTML = html;
+}
+
+
+// ═══ TOAST ════════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══ INIT ═════════════════════════════════════════════════════
+(async () => {
+  // Pre-fetch sessions into cache so home loads fast
+  await fetchSessions();
+  await renderHome();
+  renderPlanContent('strength_a');
+})();
+</script>
+</body>
+</html>
